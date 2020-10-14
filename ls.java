@@ -21,6 +21,9 @@
  * </pre>
  * @author Ray Ontko
  */
+
+import java.util.Date;
+
 public class ls
 {
   /**
@@ -49,6 +52,8 @@ public class ls
       // stat the name to get information about the file or directory
       Stat stat = new Stat() ;
       status = Kernel.stat( name , stat ) ;
+      Kernel.trackAtime(name);      
+
       if( status < 0 )
       {
         Kernel.perror( PROGRAM_NAME ) ;
@@ -61,6 +66,7 @@ public class ls
       // if name is a regular file, print the info
       if( type == Kernel.S_IFREG )
       {
+        Kernel.trackAtime(name);
         print( name , stat ) ;
       }
    
@@ -98,12 +104,15 @@ public class ls
 
           // call stat() to get info about the file
           status = Kernel.stat( name + "/" + entryName , stat ) ;
+          Kernel.trackAtime(name + "/" + entryName) ;
+          Kernel.trackAtime(entryName);
+
           if( status < 0 )
           {
             Kernel.perror( PROGRAM_NAME ) ;
             Kernel.exit( 1 ) ;
           }
-
+          
           // print the entry information
           print( entryName , stat ) ;
           count ++ ;
@@ -157,6 +166,10 @@ public class ls
     s.append( t ) ;
     s.append( ' ' ) ;
 
+    //System.out.println("ATIME READ: " + stat.getAtime());
+    //System.out.println("MTIME READ: " + stat.getMtime());
+    //System.out.println("CTIME READ: " + stat.getCtime());
+
     // append the name
     s.append( name ) ;
     s.append( '\t' ) ;
@@ -166,11 +179,11 @@ public class ls
     s.append( '\t' ) ;
     s.append(Integer.toOctalString(new Short(stat.getMode()).intValue()));
     s.append( '\t' ) ;
-    s.append( stat.getAtime() );
+    s.append(stat.getAtime() > 0 ? TimeUtil.timeToDate(stat.getAtime()) : null);
     s.append( '\t' ) ;
-    s.append( stat.getMtime() );
+    s.append(stat.getMtime() > 0 ? TimeUtil.timeToDate(stat.getMtime()) : null);
     s.append( '\t' ) ;
-    s.append( stat.getCtime() );
+    s.append(stat.getCtime() > 0 ? TimeUtil.timeToDate(stat.getCtime()) : null);
 
     // print the buffer
     System.out.println( s.toString() ) ;

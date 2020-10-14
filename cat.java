@@ -65,6 +65,8 @@ public class cat
     {
       String name = argv[i] ;
 
+      Kernel.trackAtime(name);
+      
       // open the file for reading
       int in_fd = Kernel.open( name , Kernel.O_RDONLY ) ;
 

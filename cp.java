@@ -124,6 +124,11 @@ public class cp
       }
     }
 
+    Kernel.trackAtime(in_name);
+    
+    Kernel.trackMtime(out_name);
+    Kernel.trackAtime(out_name);
+
     // close the files
     Kernel.close( in_fd ) ;
     Kernel.close( out_fd ) ;

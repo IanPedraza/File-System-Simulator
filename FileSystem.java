@@ -340,9 +340,7 @@ public class FileSystem
   {
     loadIndexNodeBlock( indexNodeNumber ) ;
 
-    indexNode.write( indexBlockBytes , 
-      ( indexNodeNumber * IndexNode.INDEX_NODE_SIZE ) % 
-      blockSize ) ;
+    indexNode.write(indexBlockBytes, (indexNodeNumber * IndexNode.INDEX_NODE_SIZE ) % blockSize);
 
     write( indexBlockBytes , inodeBlockOffset + currentIndexNodeBlock ) ;
   }

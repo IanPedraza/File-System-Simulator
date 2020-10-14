@@ -43,11 +43,11 @@ public class Stat
 
   public int st_size = 0 ;
 
-  public Date st_atime = new Date();
+  public long st_atime = 0L;
 
-  public Date st_mtime = new Date() ;
+  public long st_mtime = 0L;
 
-  public Date st_ctime = new Date() ;
+  public long st_ctime = 0L;
 
     public void setDev( short newDev )
   {
@@ -129,46 +129,34 @@ public class Stat
     return st_size ;
   }
 
-  public void setAtime( Date newAtime )
+  public void setAtime( long newAtime )
   {
     st_atime = newAtime ;
   }
 
-  public Date getAtime()
+  public long getAtime()
   {
-    return st_atime ;
+    return st_atime;
   }
 
-  public void setMtime( Date newMtime )
+  public void setMtime( long newMtime )
   {
     st_mtime = newMtime ;
   }
 
-  public Date getMtime()
+  public long getMtime()
   {
-    return st_mtime ;
+    return st_mtime;
   }
 
-  public void setCtime( Date newCtime )
+  public void setCtime( long newCtime )
   {
     st_ctime = newCtime ;
   }
 
-  public Date getCtime()
+  public long getCtime()
   {
-    return st_ctime ;
-  }
-
-  public void trackAtime() {
-    st_atime = new Date(System.currentTimeMillis());
-  }
-
-  public void trackMtime() {
-    st_mtime = new Date(System.currentTimeMillis());
-  }
-
-  public void trackCtime() {
-    st_ctime = new Date(System.currentTimeMillis());
+    return st_ctime;
   }
 
   public void copyIndexNode( IndexNode indexNode )

@@ -749,6 +749,7 @@ public class Kernel
     String fullPath = getFullPath( pathname ) ;
 
     IndexNode indexNode = new IndexNode() ;
+
     short indexNodeNumber = findIndexNode( fullPath , indexNode ) ;
     if( indexNodeNumber < 0 )
       return -1 ;
@@ -779,6 +780,8 @@ public class Kernel
    */
   private static int open( FileDescriptor fileDescriptor )
   {
+
+
     // scan the kernel open file list for a slot 
     // and add our new file descriptor
     int kfd = -1 ;
@@ -885,7 +888,7 @@ public class Kernel
    * @return number of bytes read; 0 if end of directory; -1 if the file
    * descriptor is invalid, or if the file is not opened for read access.
    * @exception java.lang.Exception if any underlying action causes
-   * Exception to be thrown
+   * Exceptionz to be thrown
    */
   public static int readdir( int fd , DirectoryEntry dirp ) 
     throws Exception
@@ -988,6 +991,107 @@ public class Kernel
     buf.st_dev = ROOT_FILE_SYSTEM ;
     buf.st_ino = indexNodeNumber ;
     buf.copyIndexNode( indexNode ) ;
+
+    return 0 ;
+  }
+
+  public static int loadStat(String name , Stat buf )
+    throws Exception
+  {
+    // get the full path
+    String path = getFullPath( name ) ;
+
+    // find the index node
+    IndexNode indexNode = new IndexNode() ;
+    short indexNodeNumber = findIndexNode( path , indexNode ) ; 
+    if( indexNodeNumber < 0 )
+    {
+      // return ENOENT
+      process.errno = ENOENT ;
+      return -1 ;
+    }
+
+    indexNode.setAtime(buf.getAtime());
+    indexNode.setMtime(buf.getMtime());
+    indexNode.setCtime(buf.getMtime());
+
+    FileSystem fs = openFileSystems[ROOT_FILE_SYSTEM] ;
+    fs.writeIndexNode(indexNode, indexNodeNumber) ;    
+
+    return 0 ;
+  }
+
+  public static int trackMtime(String name)
+  throws Exception
+{
+  // get the full path
+  String path = getFullPath( name ) ;
+
+  // find the index node
+  IndexNode indexNode = new IndexNode() ;
+
+  short indexNodeNumber = findIndexNode( path , indexNode ) ; 
+  if( indexNodeNumber < 0 )
+  {
+    // return ENOENT
+    process.errno = ENOENT ;
+    return -1 ;
+  }
+
+  indexNode.setMtime(TimeUtil.getTimestamp());
+
+  FileSystem fileSystem = openFileSystems[ ROOT_FILE_SYSTEM ] ;
+  fileSystem.writeIndexNode(indexNode , indexNodeNumber) ;
+
+  return 0 ;
+}
+
+  public static int trackAtime(String name)
+    throws Exception
+  {
+    // get the full path
+    String path = getFullPath( name ) ;
+
+    // find the index node
+    IndexNode indexNode = new IndexNode() ;
+
+    short indexNodeNumber = findIndexNode( path , indexNode ) ; 
+    if( indexNodeNumber < 0 )
+    {
+      // return ENOENT
+      process.errno = ENOENT ;
+      return -1 ;
+    }
+
+    indexNode.setAtime(TimeUtil.getTimestamp());
+
+    FileSystem fileSystem = openFileSystems[ ROOT_FILE_SYSTEM ] ;
+    fileSystem.writeIndexNode(indexNode , indexNodeNumber) ;
+
+    return 0 ;
+  }
+
+  public static int trackCtime(String name)
+    throws Exception
+  {
+    // get the full path
+    String path = getFullPath( name ) ;
+
+    // find the index node
+    IndexNode indexNode = new IndexNode() ;
+
+    short indexNodeNumber = findIndexNode( path , indexNode ) ; 
+    if( indexNodeNumber < 0 )
+    {
+      // return ENOENT
+      process.errno = ENOENT ;
+      return -1 ;
+    }
+
+    indexNode.setCtime(TimeUtil.getTimestamp());
+
+    FileSystem fileSystem = openFileSystems[ ROOT_FILE_SYSTEM ] ;
+    fileSystem.writeIndexNode(indexNode , indexNodeNumber) ;
 
     return 0 ;
   }
@@ -1496,8 +1600,7 @@ Some internal methods.
     // ??? tbd
     // return (EACCES) if a needed directory is not readable
 
-    FileDescriptor fileDescriptor = 
-      new FileDescriptor( fileSystem , indexNode , O_RDONLY ) ;
+    FileDescriptor fileDescriptor = new FileDescriptor( fileSystem , indexNode , O_RDONLY ) ;
     int fd = open( fileDescriptor ) ;
     if( fd < 0 )
     {

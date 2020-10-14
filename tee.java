@@ -109,6 +109,10 @@ public class tee
       System.out.write( buffer , 0 , rd_count ) ;
     }
 
+    Stat mStat = new Stat();
+    //Kernel.trackMtime(name , mStat);
+    Kernel.trackMtime(name);
+
     // close the output file
     Kernel.close( out_fd ) ;
 

@@ -138,7 +138,7 @@ public class IndexNode
    * This is traditionally implemented as the number of seconds 
    * past 1970/01/01 00:00:00
    */
-  private Date atime = null ;
+  private long atime = 0L ;
 
   /*
    * Not yet implemented.
@@ -146,7 +146,7 @@ public class IndexNode
    * This is traditionally implemented as the number of seconds 
    * past 1970/01/01 00:00:00
    */
-  private Date mtime = null ;
+  private long mtime = 0L ;
 
   /*
    * Not yet implemented.
@@ -154,7 +154,7 @@ public class IndexNode
    * This is traditionally implemented as the number of seconds 
    * past 1970/01/01 00:00:00
    */
-  private Date ctime = null ;
+  private long ctime = 0L ;
 
   /**
    * Creates an index node.
@@ -270,46 +270,34 @@ public class IndexNode
       throw new Exception( "invalid block address " + block ) ;
   }
 
-  public void setAtime( Date newAtime )
+  public void setAtime(long newAtime)
   {
     atime = newAtime ;
   }
 
-  public Date getAtime()
+  public long getAtime()
   {
-    return atime ;
+    return atime;
   }
 
-  public void setMtime( Date newMtime )
+  public void setMtime(long newMtime)
   {
     mtime = newMtime ;
   }
 
-  public Date getMtime()
+  public long getMtime()
   {
-    return mtime ;
+    return mtime;
   }
 
-  public void setCtime( Date newCtime )
+  public void setCtime( long newCtime )
   {
     ctime = newCtime ;
   }
 
-  public Date getCtime()
+  public long getCtime()
   {
-    return ctime ;
-  }
-
-  public void trackAtime() {
-    atime = new Date(System.currentTimeMillis());
-  }
-
-  public void trackMtime() {
-    mtime = new Date(System.currentTimeMillis());
-  }
-
-  public void trackCtime() {
-    ctime = new Date(System.currentTimeMillis());
+    return ctime;
   }
 
   /**
@@ -345,18 +333,65 @@ public class IndexNode
     buffer[offset+8+2] = (byte)( size >>> 8 ) ;
     buffer[offset+8+3] = (byte)( size ) ;
 
+    int last = 0;
+
     // write the directBlocks info 3 bytes at a time
     for( int i = 0 ; i < MAX_DIRECT_BLOCKS ; i ++ )
     {
       buffer[offset+12+3*i]   = (byte)( directBlocks[i] >>> 16 ) ;
       buffer[offset+12+3*i+1] = (byte)( directBlocks[i] >>> 8 ) ;
       buffer[offset+12+3*i+2] = (byte)( directBlocks[i] ) ;
+      last = offset+12+3*i+2;
     }
+
+    last++;
 
     // leave room for indirectBlock, doubleIndirectBlock, tripleIndirectBlock
 
     // leave room for atime, mtime, ctime
-    trackMtime();
+    
+    if((offset + last) > buffer.length) {
+      System.out.println("File too large");
+      return;
+    } 
+
+    // write atime
+    buffer[offset+last] = (byte)( atime >>> 56) ;
+    buffer[offset+last+1] = (byte)( atime >>> 48) ;
+    buffer[offset+last+2] = (byte)( atime >>> 40) ;
+    buffer[offset+last+3] = (byte)( atime >>> 32) ;
+    buffer[offset+last+4] = (byte)( atime >>> 24) ;
+    buffer[offset+last+5] = (byte)( atime >>> 16) ;
+    buffer[offset+last+6] = (byte)( atime >>> 8) ;
+    buffer[offset+last+7] = (byte) atime ;
+
+    last += 7;
+
+    // write mtime
+    buffer[offset+last] = (byte)( mtime >>> 56) ;
+    buffer[offset+last+1] = (byte)( mtime >>> 48) ;
+    buffer[offset+last+2] = (byte)( mtime >>> 40) ;
+    buffer[offset+last+3] = (byte)( mtime >>> 32) ;
+    buffer[offset+last+4] = (byte)( mtime >>> 24) ;
+    buffer[offset+last+5] = (byte)( mtime >>> 16) ;
+    buffer[offset+last+6] = (byte)( mtime >>> 8) ;
+    buffer[offset+last+7] = (byte) mtime ;
+
+    last += 7;
+
+    // write ctime
+    buffer[offset+last] = (byte)( ctime >>> 56) ;
+    buffer[offset+last+1] = (byte)( ctime >>> 48) ;
+    buffer[offset+last+2] = (byte)( ctime >>> 40) ;
+    buffer[offset+last+3] = (byte)( ctime >>> 32) ;
+    buffer[offset+last+4] = (byte)( ctime >>> 24) ;
+    buffer[offset+last+5] = (byte)( ctime >>> 16) ;
+    buffer[offset+last+6] = (byte)( ctime >>> 8) ;
+    buffer[offset+last+7] = (byte) ctime ;
+
+    //System.out.println("ATIME WRITTEN: " + atime);
+    //System.out.println("MTIME WRITTEN: " + mtime);
+    //System.out.println("CTIME WRITTEN: " + ctime);
   }
 
   /**
@@ -370,10 +405,15 @@ public class IndexNode
    */
   public void read( byte[] buffer , int offset )
   {
+    int b7 ;
+    int b6 ;
+    int b5 ;
+    int b4 ;
     int b3 ;
     int b2 ;
     int b1 ;
     int b0 ;
+    int last = 0;
 
     // read the mode info
     b1 = buffer[offset] & 0xff ;
@@ -408,13 +448,63 @@ public class IndexNode
       b2 = buffer[offset+12+i*3] & 0xff ;
       b1 = buffer[offset+12+i*3+1] & 0xff ;
       b0 = buffer[offset+12+i*3+2] & 0xff ;
+      last = offset+12+i*3+2;
       directBlocks[i] = b2 << 16 | b1 << 8 | b0 ; 
     }
+
+    last++;
 
     // leave room for indirectBlock, doubleIndirectBlock, tripleIndirectBlock
 
     // leave room for atime, mtime, ctime
-    trackAtime();
+
+    if((offset + last) > buffer.length) {
+      System.out.println("File too large");
+      return;
+    } 
+
+    // read the atime info
+    b7 = buffer[offset+last] & 0xff ;
+    b6 = buffer[offset+last+1] & 0xff ;
+    b5 = buffer[offset+last+2] & 0xff ;
+    b4 = buffer[offset+last+3] & 0xff ;
+    b3 = buffer[offset+last+4] & 0xff ;
+    b2 = buffer[offset+last+5] & 0xff ;
+    b1 = buffer[offset+last+6] & 0xff ;
+    b0 = buffer[offset+last+7] & 0xff ;
+    atime = (long) b7 << 56 | (long) b6 << 48 | (long) b5 << 40 | (long) b4 << 32 | (long) b3 << 24 | (long) b2 << 16 | (long) b1 << 8 | (long) b0 ; 
+
+    last += 7;
+
+    // read the mtime info    
+    b7 = buffer[offset+last] & 0xff ;
+    b6 = buffer[offset+last+1] & 0xff ;
+    b5 = buffer[offset+last+2] & 0xff ;
+    b4 = buffer[offset+last+3] & 0xff ;
+    b3 = buffer[offset+last+4] & 0xff ;
+    b2 = buffer[offset+last+5] & 0xff ;
+    b1 = buffer[offset+last+6] & 0xff ;
+    b0 = buffer[offset+last+7] & 0xff ;
+    mtime = (long) b7 << 56 | (long) b6 << 48 | (long) b5 << 40 | (long) b4 << 32 | (long) b3 << 24 | (long) b2 << 16 | (long) b1 << 8 | (long) b0 ; 
+
+    last += 7;
+
+    // read the ctime info    
+    b7 = buffer[offset+last] & 0xff ;
+    b6 = buffer[offset+last+1] & 0xff ;
+    b5 = buffer[offset+last+2] & 0xff ;
+    b4 = buffer[offset+last+3] & 0xff ;
+    b3 = buffer[offset+last+4] & 0xff ;
+    b2 = buffer[offset+last+5] & 0xff ;
+    b1 = buffer[offset+last+6] & 0xff ;
+    b0 = buffer[offset+last+7] & 0xff ;
+    ctime = (long) b7 << 56 | (long) b6 << 48 | (long) b5 << 40 | (long) b4 << 32 | (long) b3 << 24 | (long) b2 << 16 | (long) b1 << 8 | (long) b0 ; 
+
+    last += 7;
+
+    //System.out.println("ATIME READ: " + atime);
+    //System.out.println("MTIME READ: " + mtime);
+    //System.out.println("CTIME READ: " + ctime);
   }
 
   /**

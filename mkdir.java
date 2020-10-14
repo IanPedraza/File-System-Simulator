@@ -106,7 +106,7 @@ public class mkdir
 
       // get file info for ".."
       Stat parentStat = new Stat() ;
-      Kernel.stat( name + "/.." , parentStat ) ;
+      Kernel.stat( name + "/.." , parentStat ) ;      
 
       // add entry for ".."
       DirectoryEntry parent = new DirectoryEntry( 
@@ -127,6 +127,10 @@ public class mkdir
         Kernel.perror( PROGRAM_NAME ) ;
         Kernel.exit( 6 ) ;
       }
+
+      Kernel.trackAtime(name);
+      Kernel.trackMtime(name);
+      Kernel.trackCtime(name);
     }
 
     // exit with success if we process all the arguments
